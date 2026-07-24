@@ -1,4 +1,4 @@
-# Qismat Takeaway
+# Kismat Kebabs
 
 Fast food delivery & collection platform for **Hull, England** — built with Django Templates and SQLite.
 
@@ -83,20 +83,10 @@ Visit **http://127.0.0.1:8000/admin/** for Django admin.
 ```
 MAILERSEND_API_TOKEN=your-token-here
 MAILERSEND_FROM_EMAIL=noreply@yourdomain.com
-MAILERSEND_FROM_NAME=Qismat Takeaway
+MAILERSEND_FROM_NAME=Kismat Kebabs
 ```
-
-## Development Roadmap
-
-- [x] **Step 1:** Base project setup
-- [x] **Step 2:** Customer auth (signup, login, email verification)
-- [ ] **Step 3:** Menu & categories
-- [ ] **Step 4:** Cart, checkout, delivery/collection
-- [ ] **Step 5:** Order tracking & reviews
-- [ ] **Step 6:** Admin panel
-- [ ] **Step 7:** Staff panel & kitchen display
 
 ## License
 
-Private project — Qismat Takeaway, Hull.
+Private project — Kismat Kebabs, Hull.
 # kismat-kebab

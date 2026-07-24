@@ -1,0 +1,106 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}{{ customer.full_name }}{% endblock %}
+{% block page_title %}Customer: {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="staff-detail-actions">
+    <a href="{% url 'staff:customer_list' %}" class="btn btn-outline btn-sm">← Back to Customers</a>
+</div>
+
+<div class="staff-stats-grid">
+    <div class="staff-stat-card">
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ total_orders }}</span>
+            <span class="staff-stat-label">Total Orders</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ completed_orders }}</span>
+            <span class="staff-stat-label">Completed</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">£{{ total_spent|floatformat:2 }}</span>
+            <span class="staff-stat-label">Total Spent</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ customer.is_email_verified|yesno:'Verified,Unverified' }}</span>
+            <span class="staff-stat-label">Email Status</span>
+        </div>
+    </div>
+</div>
+
+<div class="staff-detail-grid">
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Customer Information</h3>
+        </div>
+        <div class="staff-card-body">
+            <div class="staff-info-grid">
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Name</span>
+                    <span class="staff-info-value">{{ customer.full_name }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Email</span>
+                    <span class="staff-info-value">{{ customer.email }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Phone</span>
+                    <span class="staff-info-value">{{ customer.phone|default:'—' }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Joined</span>
+                    <span class="staff-info-value">{{ customer.created_at|date:'d M Y H:i' }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Email Verified</span>
+                    <span class="staff-info-value">{{ customer.is_email_verified|yesno:'Yes,No' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Recent Orders</h3>
+        </div>
+        <div class="staff-card-body">
+            {% if orders %}
+            <div class="staff-table-responsive">
+                <table class="staff-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.order_number }}</td>
+                            <td class="staff-text-muted">{{ order.created_at|date:'d M Y' }}</td>
+                            <td>£{{ order.total|floatformat:2 }}</td>
+                            <td><span class="staff-badge staff-badge-{{ order.status }}">{{ order.status_label }}</span></td>
+                            <td><a href="{% url 'staff:order_detail' order.order_number %}" class="btn btn-outline btn-sm">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="staff-empty-text">No orders yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

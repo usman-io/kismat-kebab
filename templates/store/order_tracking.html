@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tracking Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<section class="section tracking-page">
+    <div class="container">
+        <div class="tracking-header">
+            <h1><i class="fas fa-map-marker-alt"></i> Order Tracking</h1>
+            <p>Order #{{ order.order_number }}</p>
+        </div>
+
+        <div class="tracking-card">
+            <div class="tracking-status-row">
+                <span class="tracking-status-text">{{ order.status_label }}</span>
+                <span class="tracking-type-badge">{{ order.get_order_type_display }}</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="tracking-progress-bar">
+                {% if order.status == 'cancelled' %}
+                <div class="progress-track cancelled">
+                    <div class="progress-fill cancelled-fill" style="width: 100%; background: var(--color-error);"></div>
+                <p style="color:var(--color-error);font-weight:600;text-align:center;margin-top:8px;">This order has been cancelled.</p>
+                {% else %}
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {{ order.status_percentage }}%;"></div>
+                <div class="progress-labels">
+                    <span class="{% if order.confirmed_at %}completed{% endif %}">Confirmed</span>
+                    <span class="{% if order.preparing_at %}completed{% endif %}">Preparing</span>
+                    <span class="{% if order.ready_at %}completed{% endif %}">Ready</span>
+                    {% if order.order_type == 'delivery' %}
+                    <span class="{% if order.out_for_delivery_at %}completed{% endif %}">Out for Delivery</span>
+                    {% endif %}
+                    <span class="{% if order.completed_at %}completed{% endif %}">{{ order.get_order_type_display }}d</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ETA -->
+            {% if order.status != 'cancelled' and order.status != 'delivered' and order.status != 'collected' %}
+            <div class="tracking-eta">
+                <span><i class="fas fa-clock"></i> Estimated time remaining: <strong>~{{ order.items.first.menu_item.prep_time_minutes|default:"15" }} minutes</strong></span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Order Summary -->
+        <div class="tracking-summary">
+            <h3>Order Summary</h3>
+            {% for item in order.items.all %}
+            <div class="tracking-item">
+                <span class="tracking-item-qty">{{ item.quantity }}x</span>
+                <span class="tracking-item-name">{{ item.menu_item_name }}</span>
+                <span class="tracking-item-price">£{{ item.total_price|floatformat:2 }}</span>
+            </div>
+            {% endfor %}
+
+            <div class="summary-divider"></div>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>£{{ order.subtotal|floatformat:2 }}</span>
+            </div>
+            {% if order.discount_amount > 0 %}
+            <div class="summary-row summary-discount">
+                <span>Discount</span>
+                <span>-£{{ order.discount_amount|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            {% if order.delivery_fee > 0 %}
+            <div class="summary-row">
+                <span>Delivery Fee</span>
+                <span>£{{ order.delivery_fee|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            <div class="summary-row summary-total">
+                <span>Total</span>
+                <span>£{{ order.total|floatformat:2 }}</span>
+            </div>
+
+        <div class="tracking-actions">
+            <a href="{% url 'store:order_detail' order.order_number %}" class="btn btn-outline">View Full Details</a>
+            <a href="{% url 'store:menu' %}" class="btn btn-outline">Browse Menu</a>
+        </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh tracking page every 30 seconds to check for status updates
+    {% if order.status != 'delivered' and order.status != 'collected' and order.status != 'cancelled' %}
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    {% endif %}
+</script>
+{% endblock %}

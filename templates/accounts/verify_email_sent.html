@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Check Your Email{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-card auth-card-centered">
+            <div class="auth-icon">📧</div>
+            <div class="auth-header">
+                <h1>Check your email</h1>
+                {% if email %}
+                <p>We sent a verification link to <strong>{{ email }}</strong></p>
+                {% else %}
+                <p>We sent a verification link to your email address</p>
+                {% endif %}
+            </div>
+
+            <div class="auth-info">
+                <p>Click the link in the email to verify your account. The link expires in 24 hours.</p>
+                <p>Can't find it? Check your spam folder or request a new link below.</p>
+            </div>
+
+            <a href="{% url 'accounts:resend_verification' %}" class="btn btn-outline btn-block">
+                Resend Verification Email
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-block" style="margin-top: 12px;">
+                Go to Sign In
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

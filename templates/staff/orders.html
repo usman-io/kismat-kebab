@@ -1,0 +1,74 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Orders{% endblock %}
+{% block page_title %}Orders{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <form method="get" class="staff-search-form">
+        <input type="text" name="q" class="form-control" placeholder="Search by order #, name, or email..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        {% if search_query or current_status %}
+        <a href="{% url 'staff:order_list' %}" class="btn btn-outline btn-sm">Clear</a>
+        {% endif %}
+    </form>
+    <div class="staff-filter-group">
+        <a href="{% url 'staff:order_list' %}" class="staff-filter-btn {% if not current_status %}active{% endif %}">All</a>
+        {% for status, label in status_choices %}
+        <a href="{% url 'staff:order_list' %}?status={{ status }}" class="staff-filter-btn {% if current_status == status %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if orders %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><a href="{% url 'staff:order_detail' order.order_number %}" class="staff-link">{{ order.order_number }}</a></td>
+                        <td>
+                            {% if order.user %}
+                                {{ order.user.full_name }}
+                            {% else %}
+                                {{ order.delivery_name|default:'Guest' }}
+                            {% endif %}
+                        </td>
+                        <td><span class="staff-type-badge staff-type-{{ order.order_type }}">{{ order.get_order_type_display }}</span></td>
+                        <td><span class="staff-badge staff-badge-{{ order.status }}">{{ order.status_label }}</span></td>
+                        <td>{{ order.items.count }}</td>
+                        <td>£{{ order.total|floatformat:2 }}</td>
+                        <td class="staff-text-muted">{{ order.created_at|date:'d M Y H:i' }}</td>
+                        <td>
+                            <a href="{% url 'staff:order_detail' order.order_number %}" class="btn btn-outline btn-sm">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon">📋</span>
+            <h3>No Orders Found</h3>
+            <p>{% if search_query or current_status %}Try adjusting your search or filters.{% else %}There are no orders yet.{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

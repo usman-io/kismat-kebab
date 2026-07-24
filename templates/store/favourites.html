@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Favourites{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-favourite.active i,
+    .btn-favourite.active {
+        color: #e63946 !important;
+    }
+    .favourites-header h1 i {
+        color: #e63946 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="section favourites-page">
+    <div class="container">
+        <div class="favourites-header">
+            <h1><i class="fas fa-heart" style="color:#e63946;"></i> My Favs</h1>
+            <p>Your saved items for quick ordering</p>
+        </div>
+
+        {% if favourites %}
+        <div class="favourites-grid">
+            {% for fav in favourites %}
+            <div class="menu-card favourite-card" data-favourite-id="{{ fav.id }}">
+                <a href="{% url 'store:menu_item' fav.menu_item.slug %}" class="menu-card-image">
+                    {% if fav.menu_item.image %}
+                    <img src="{{ fav.menu_item.image.url }}" alt="{{ fav.menu_item.name }}" loading="lazy">
+                    {% else %}
+                    <div class="menu-card-placeholder"><i class="fas fa-utensils" style="font-size:3rem;color:#ccc;"></i></div>
+                    {% endif %}
+                </a>
+                <div class="menu-card-body">
+                    <div class="menu-card-top">
+                        <h3><a href="{% url 'store:menu_item' fav.menu_item.slug %}">{{ fav.menu_item.name }}</a></h3>
+                        <span class="menu-card-price">{{ fav.menu_item.display_price }}</span>
+                    </div>
+                    <p class="menu-card-desc">{{ fav.menu_item.description|truncatechars:60 }}</p>
+                    <div class="menu-card-footer">
+                        <form method="post" action="{% url 'store:add_to_cart' %}" class="quick-add-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="menu_item_id" value="{{ fav.menu_item.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <input type="hidden" name="next" value="{% url 'store:favourites' %}">
+                            <button type="submit" class="btn btn-primary btn-sm">Add to Cart</button>
+                        </form>
+                        <form method="post" action="{% url 'store:toggle_favourite' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="menu_item_id" value="{{ fav.menu_item.id }}">
+                            <button type="submit" class="btn-favourite active" title="Remove from favourites"><i class="fas fa-heart"></i></button>
+                        </form>
+                    </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon"><i class="fas fa-heart" style="color:#e63946;"></i></span>
+            <h3>No favourites yet</h3>
+            <p>Browse our menu and click the heart icon to save your favourite items for quick ordering.</p>
+            <a href="{% url 'store:menu' %}" class="btn btn-primary btn-lg">Browse Menu</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

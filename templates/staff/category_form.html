@@ -1,0 +1,61 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}{% if is_new %}Add Category{% else %}Edit Category{% endif %}{% endblock %}
+{% block page_title %}{% if is_new %}Add Category{% else %}Edit: {{ category.name }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="staff-detail-actions">
+    <a href="{% url 'staff:category_list' %}" class="btn btn-outline btn-sm">← Back to Categories</a>
+</div>
+
+<div class="staff-form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="staff-form-grid">
+            <div class="staff-form-group">
+                <label for="name">Category Name *</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ category.name|default:'' }}" required>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="icon">Icon (emoji)</label>
+                <input type="text" id="icon" name="icon" class="form-control" value="{{ category.icon|default:'' }}" maxlength="10" placeholder="e.g. 🍔">
+            </div>
+
+            <div class="staff-form-group">
+                <label for="sort_order">Sort Order</label>
+                <input type="number" id="sort_order" name="sort_order" class="form-control" value="{{ category.sort_order|default:'0' }}" min="0">
+            </div>
+
+            <div class="staff-form-group staff-form-full">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3">{{ category.description|default:'' }}</textarea>
+            </div>
+
+            <div class="staff-form-group staff-form-full">
+                <label for="image">Image</label>
+                {% if category.image %}
+                <div class="staff-current-image">
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" style="max-width: 120px; border-radius: 6px; margin-bottom: 8px;">
+                </div>
+                {% endif %}
+                <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            </div>
+        </div>
+
+        <div class="staff-form-toggles">
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_active" {% if category.is_active or is_new %}checked{% endif %}>
+                <span>Active</span>
+            </label>
+        </div>
+
+        <div class="staff-form-actions">
+            <button type="submit" class="btn btn-primary">{% if is_new %}Create Category{% else %}Save Changes{% endif %}</button>
+            <a href="{% url 'staff:category_list' %}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

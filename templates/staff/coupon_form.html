@@ -1,0 +1,70 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}{% if is_new %}Add Promo Code{% else %}Edit Promo Code{% endif %}{% endblock %}
+{% block page_title %}{% if is_new %}Add Promo Code{% else %}Edit: {{ coupon.code }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="staff-detail-actions">
+    <a href="{% url 'staff:coupon_list' %}" class="btn btn-outline btn-sm">← Back to Promo Codes</a>
+</div>
+
+<div class="staff-form-card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="staff-form-grid">
+            <div class="staff-form-group">
+                <label for="code">Promo Code *</label>
+                <input type="text" id="code" name="code" class="form-control" value="{{ coupon.code|default:'' }}" required placeholder="e.g. SUMMER20">
+            </div>
+
+            <div class="staff-form-group">
+                <label for="discount_type">Discount Type</label>
+                <select id="discount_type" name="discount_type" class="form-control">
+                    {% for value, label in discount_types %}
+                    <option value="{{ value }}" {% if coupon.discount_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="discount_value">Discount Value *</label>
+                <input type="number" id="discount_value" name="discount_value" class="form-control" step="0.01" min="0" value="{{ coupon.discount_value|default:'' }}" required>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="min_spend">Minimum Spend (£)</label>
+                <input type="number" id="min_spend" name="min_spend" class="form-control" step="0.01" min="0" value="{{ coupon.min_spend|default:'0.00' }}">
+            </div>
+
+            <div class="staff-form-group">
+                <label for="max_uses">Max Uses (0 = unlimited)</label>
+                <input type="number" id="max_uses" name="max_uses" class="form-control" min="0" value="{{ coupon.max_uses|default:'0' }}">
+            </div>
+
+            <div class="staff-form-group">
+                <label for="valid_from">Valid From *</label>
+                <input type="datetime-local" id="valid_from" name="valid_from" class="form-control" value="{{ coupon.valid_from|date:'Y-m-d\\TH:i'|default:'' }}" required>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="valid_until">Valid Until *</label>
+                <input type="datetime-local" id="valid_until" name="valid_until" class="form-control" value="{{ coupon.valid_until|date:'Y-m-d\\TH:i'|default:'' }}" required>
+            </div>
+        </div>
+
+        <div class="staff-form-toggles">
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_active" {% if coupon.is_active or is_new %}checked{% endif %}>
+                <span>Active</span>
+            </label>
+        </div>
+
+        <div class="staff-form-actions">
+            <button type="submit" class="btn btn-primary">{% if is_new %}Create Promo Code{% else %}Save Changes{% endif %}</button>
+            <a href="{% url 'staff:coupon_list' %}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

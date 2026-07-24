@@ -1,0 +1,100 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Reviews{% endblock %}
+{% block page_title %}Reviews{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <form method="get" class="staff-search-form">
+        <input type="text" name="q" class="form-control" placeholder="Search by user, item, or comment..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        {% if search_query or current_status %}
+        <a href="{% url 'staff:review_list' %}" class="btn btn-outline btn-sm">Clear</a>
+        {% endif %}
+    </form>
+    <div class="staff-filter-group">
+        <a href="{% url 'staff:review_list' %}" class="staff-filter-btn {% if not current_status %}active{% endif %}">All</a>
+        <a href="{% url 'staff:review_list' %}?status=pending" class="staff-filter-btn {% if current_status == 'pending' %}active{% endif %}">Pending</a>
+        <a href="{% url 'staff:review_list' %}?status=approved" class="staff-filter-btn {% if current_status == 'approved' %}active{% endif %}">Approved</a>
+    </div>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if reviews %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews %}
+                    <tr>
+                        <td>{{ review.user.full_name|default:review.user.email }}</td>
+                        <td>
+                            <a href="{% url 'store:menu_item' review.menu_item.slug %}" class="staff-link" target="_blank">{{ review.menu_item.name }}</a>
+                        </td>
+                        <td>
+                            <span class="staff-review-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                {% endfor %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if review.comment %}
+                            <span class="staff-text-muted">{{ review.comment|truncatechars:60 }}</span>
+                            {% else %}
+                            <span class="staff-text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="staff-text-muted">{{ review.created_at|date:'d M Y' }}</td>
+                        <td>
+                            {% if review.is_approved %}
+                            <span class="staff-badge staff-badge-available">Approved</span>
+                            {% else %}
+                            <span class="staff-badge staff-badge-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="staff-action-btns">
+                                {% if not review.is_approved %}
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+                                </form>
+                                {% endif %}
+                                <form method="post" style="display:inline;" onsubmit="return confirm('Delete this review?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="btn btn-sm btn-outline">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon"><i class="fas fa-comment"></i></span>
+            <h3>No Reviews Found</h3>
+            <p>{% if search_query or current_status %}Try adjusting your search or filters.{% else %}There are no customer reviews yet.{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

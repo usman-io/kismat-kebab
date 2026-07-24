@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Confirmed!{% endblock %}
+
+{% block content %}
+<section class="section confirmation-page">
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="confirmation-icon"><i class="fas fa-check-circle" style="font-size:4rem;color:var(--color-success);"></i></div>
+            <h1>Order Placed!</h1>
+            <p class="confirmation-subtitle">Thank you for your order. Your food is being prepared!</p>
+
+            <div class="confirmation-details">
+                <div class="confirmation-row">
+                    <span>Order Number</span>
+                    <strong>#{{ order.order_number }}</strong>
+                </div>
+                <div class="confirmation-row">
+                    <span>Order Type</span>
+                    <strong>{{ order.get_order_type_display }}</strong>
+                </div>
+                <div class="confirmation-row">
+                    <span>Total</span>
+                    <strong>£{{ order.total|floatformat:2 }}</strong>
+                </div>
+                <div class="confirmation-row">
+                    <span>Status</span>
+                    <strong>{{ order.status_label }}</strong>
+                </div>
+            </div>
+
+            <div class="confirmation-actions">
+                <a href="{% url 'store:order_tracking' order.order_number %}" class="btn btn-primary btn-lg">Track Order</a>
+                <a href="{% url 'store:order_detail' order.order_number %}" class="btn btn-outline btn-lg">View Details</a>
+                <a href="{% url 'store:menu' %}" class="btn btn-outline btn-lg">Order More</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

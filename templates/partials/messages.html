@@ -1,0 +1,23 @@
+<div id="toastContainer" class="toast-container">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}" role="alert" data-toast>
+        <div class="toast-content">
+            <span class="toast-icon">
+                {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                <i class="fas fa-exclamation-circle"></i>
+                {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                <i class="fas fa-info-circle"></i>
+                {% endif %}
+            </span>
+            <span class="toast-message">{{ message }}</span>
+        </div>
+        <button class="toast-close" data-toast-close>&times;</button>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>

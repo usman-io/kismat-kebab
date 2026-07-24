@@ -1,0 +1,206 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block page_title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="staff-detail-actions">
+    <a href="{% url 'staff:order_list' %}" class="btn btn-outline btn-sm">← Back to Orders</a>
+</div>
+
+<div class="staff-detail-grid">
+    <!-- Order Info -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Order Information</h3>
+        </div>
+        <div class="staff-card-body">
+            <div class="staff-info-grid">
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Order Number</span>
+                    <span class="staff-info-value">{{ order.order_number }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Status</span>
+                    <span class="staff-badge staff-badge-{{ order.status }}">{{ order.status_label }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Order Type</span>
+                    <span class="staff-type-badge staff-type-{{ order.order_type }}">{{ order.get_order_type_display }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Placed At</span>
+                    <span class="staff-info-value">{{ order.created_at|date:'d M Y H:i' }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Subtotal</span>
+                    <span class="staff-info-value">£{{ order.subtotal|floatformat:2 }}</span>
+                </div>
+                {% if order.discount_amount > 0 %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Discount</span>
+                    <span class="staff-info-value staff-text-success">-£{{ order.discount_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_fee > 0 %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Delivery Fee</span>
+                    <span class="staff-info-value">£{{ order.delivery_fee|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Total</span>
+                    <span class="staff-info-value staff-text-bold">£{{ order.total|floatformat:2 }}</span>
+                </div>
+                {% if order.coupon %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Coupon</span>
+                    <span class="staff-info-value">{{ order.coupon.code }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer & Delivery Info -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Customer & Delivery</h3>
+        </div>
+        <div class="staff-card-body">
+            <div class="staff-info-grid">
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Customer</span>
+                    <span class="staff-info-value">{{ order.user.full_name|default:'Guest' }}</span>
+                </div>
+                {% if order.user %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Email</span>
+                    <span class="staff-info-value">{{ order.user.email }}</span>
+                </div>
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Phone</span>
+                    <span class="staff-info-value">{{ order.user.phone|default:'—' }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_name %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Delivery Name</span>
+                    <span class="staff-info-value">{{ order.delivery_name }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_phone %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Delivery Phone</span>
+                    <span class="staff-info-value">{{ order.delivery_phone }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_address %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Delivery Address</span>
+                    <span class="staff-info-value">{{ order.delivery_address }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_postcode %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Postcode</span>
+                    <span class="staff-info-value">{{ order.delivery_postcode }}</span>
+                </div>
+                {% endif %}
+                {% if order.delivery_notes %}
+                <div class="staff-info-item">
+                    <span class="staff-info-label">Notes</span>
+                    <span class="staff-info-value">{{ order.delivery_notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Status -->
+<div class="staff-card">
+    <div class="staff-card-header">
+        <h3>Update Status</h3>
+    </div>
+    <div class="staff-card-body">
+        <form method="post" class="staff-status-form">
+            {% csrf_token %}
+            <div class="staff-status-buttons">
+                {% for status, label in status_choices %}
+                {% if status != order.status %}
+                <button type="submit" name="status" value="{{ status }}" class="btn btn-sm staff-status-btn staff-status-{{ status }}">
+                    {{ label }}
+                </button>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <p class="staff-text-muted" style="margin-top: 8px;">Current status: <strong>{{ order.status_label }}</strong></p>
+        </form>
+    </div>
+</div>
+
+<!-- Order Items -->
+<div class="staff-card">
+    <div class="staff-card-header">
+        <h3>Order Items ({{ order.items.count }})</h3>
+    </div>
+    <div class="staff-card-body">
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Extras</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.menu_item_name }}</td>
+                        <td>
+                            {% if item.extras_data %}
+                            <div class="staff-extras-list">
+                                {% for extra in item.extras_data %}
+                                <span class="staff-extra-tag">{{ extra.name }} <small>(+£{{ extra.price }})</small></span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="staff-text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>£{{ item.unit_price|floatformat:2 }}</td>
+                        <td>£{{ item.total_price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="staff-text-right">Subtotal</td>
+                        <td>£{{ order.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    {% if order.discount_amount > 0 %}
+                    <tr>
+                        <td colspan="4" class="staff-text-right">Discount</td>
+                        <td class="staff-text-success">-£{{ order.discount_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td colspan="4" class="staff-text-right">Delivery Fee</td>
+                        <td>£{{ order.delivery_fee|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="staff-total-row">
+                        <td colspan="4" class="staff-text-right"><strong>Total</strong></td>
+                        <td><strong>£{{ order.total|floatformat:2 }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

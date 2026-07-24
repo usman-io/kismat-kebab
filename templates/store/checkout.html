@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block extra_css %}
+{% if stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="section checkout-page">
+    <div class="container">
+        <div class="checkout-header">
+            <h1>Checkout</h1>
+        </div>
+
+        {% if needs_payment and client_secret %}
+        <!-- Stripe Payment Step -->
+        <div class="checkout-layout">
+            <div class="checkout-details-col">
+                <div class="checkout-card">
+                    <h3>✅ Order Created</h3>
+                    <p style="color:var(--color-text-muted);margin-bottom:8px;">
+                        Your order <strong>#{{ order.order_number }}</strong> has been created.
+                        Complete payment below to confirm it.
+                    </p>
+                    <div class="staff-info-grid">
+                        <div class="staff-info-item">
+                            <span class="staff-info-label">Order Type</span>
+                            <span class="staff-type-badge staff-type-{{ order.order_type }}">{{ order.get_order_type_display }}</span>
+                        </div>
+                        {% if order.delivery_name %}
+                        <div class="staff-info-item">
+                            <span class="staff-info-label">Delivering to</span>
+                            <span>{{ order.delivery_name }}, {{ order.delivery_address }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkout-summary-col">
+                <div class="cart-summary-card">
+                    <h3>Complete Payment</h3>
+
+                    <div class="summary-row summary-total">
+                        <span>Total to Pay</span>
+                        <span>£{{ order.total|floatformat:2 }}</span>
+                    </div>
+
+                    <!-- Stripe Card Element -->
+                    <form id="payment-form" style="margin-top:20px;">
+                        <div id="card-element" class="form-control" style="padding:14px;border-radius:var(--radius-md);">
+                            <!-- Stripe Elements mounts here -->
+                        </div>
+                        <div id="card-errors" style="color:var(--color-error);margin-top:8px;font-size:0.9rem;"></div>
+                        <button id="submit-btn" type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top:20px;">
+                            <span id="button-text">Pay £{{ order.total|floatformat:2 }}</span>
+                            <span id="spinner" style="display:none;" class="spinner">⏳</span>
+                        </button>
+                    </form>
+
+                    <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--color-text-muted);">
+                        Your card will be charged securely via Stripe.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Delivery Details Form -->
+        <form method="post" action="{% url 'store:checkout' %}" class="checkout-form" id="checkoutForm">
+            {% csrf_token %}
+
+            <div class="checkout-layout">
+                <!-- Delivery Details -->
+                <div class="checkout-details-col">
+                    <!-- Order Type -->
+                    <div class="checkout-card">
+                        <h3>Order Type</h3>
+                        <div class="order-type-selector">
+                            <label class="type-option {% if order_type == 'delivery' %}active{% endif %}">
+                                <input type="radio" name="order_type" value="delivery" {% if order_type == 'delivery' %}checked{% endif %} onchange="toggleOrderType()">
+                                <span class="type-icon"><i class="fas fa-truck"></i></span>
+                                <span class="type-label">Delivery</span>
+                            </label>
+                            <label class="type-option {% if order_type == 'collection' %}active{% endif %}">
+                                <input type="radio" name="order_type" value="collection" {% if order_type == 'collection' %}checked{% endif %} onchange="toggleOrderType()">
+                                <span class="type-icon"><i class="fas fa-store"></i></span>
+                                <span class="type-label">Collection</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div class="checkout-card" id="deliveryDetails">
+                        <h3>Delivery Details</h3>
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" name="name" id="name" class="form-control" value="{{ delivery_details.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" name="phone" id="phone" class="form-control" value="{{ delivery_details.phone }}" required>
+                        </div>
+                        <div class="form-group" id="addressGroup">
+                            <label for="address">Delivery Address *</label>
+                            <textarea name="address" id="address" class="form-control" rows="2" required>{{ delivery_details.address }}</textarea>
+                        </div>
+                        <div class="form-group" id="postcodeGroup">
+                            <label for="postcode">Postcode</label>
+                            <input type="text" name="postcode" id="postcode" class="form-control" value="{{ delivery_details.postcode }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Order Notes</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Any special instructions for the restaurant...">{{ delivery_details.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="checkout-summary-col">
+                    <div class="cart-summary-card">
+                        <h3>Order Summary</h3>
+
+                        {% for item in cart_data.cart_items %}
+                        <div class="checkout-item">
+                            <span class="checkout-item-qty">{{ item.quantity }}x</span>
+                            <span class="checkout-item-name">{{ item.menu_item.name }}</span>
+                            <span class="checkout-item-price">£{{ item.total_price|floatformat:2 }}</span>
+                        </div>
+                        {% if item.selected_extras %}
+                        <div class="checkout-item-extras">
+                            {% for extra in item.selected_extras %}
+                            <span>{{ extra.name }} {% if extra.price > 0 %}+£{{ extra.price|floatformat:2 }}{% endif %}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>£{{ cart_data.subtotal|floatformat:2 }}</span>
+                        </div>
+
+                        {% if cart_data.discount > 0 %}
+                        <div class="summary-row summary-discount">
+                            <span>Discount ({{ cart_data.coupon.code }})</span>
+                            <span>-£{{ cart_data.discount|floatformat:2 }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="summary-row" id="deliveryFeeRow" style="display:none;">
+                            <span>Delivery Fee</span>
+                            <span id="deliveryFeeAmount">£0.00</span>
+                        </div>
+
+                        <div class="summary-row summary-total">
+                            <span>Total</span>
+                            <span id="checkoutTotal">£{{ cart_data.total|floatformat:2 }}</span>
+                        </div>
+
+                        <input type="hidden" name="order_type" value="{{ order_type }}">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top: 20px;">
+                            Continue to Payment
+                        </button>
+
+                        <p style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--color-text-muted);">
+                            By placing this order, you agree to our terms and conditions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if client_secret %}
+<script>
+    // Initialize Stripe
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    const elements = stripe.elements();
+
+    // Create the card Element
+    const style = {
+        base: {
+            fontFamily: '"Inter", sans-serif',
+            fontSize: '16px',
+            color: '#1a1a2e',
+            '::placeholder': { color: '#6b7280' },
+        },
+        invalid: {
+            color: '#dc2626',
+            iconColor: '#dc2626',
+        },
+    };
+
+    const card = elements.create('card', {
+        style: style,
+        hidePostalCode: true,
+    });
+    card.mount('#card-element');
+
+    // Handle real-time validation errors
+    card.addEventListener('change', function(event) {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    // Handle form submission
+    const form = document.getElementById('payment-form');
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const submitBtn = document.getElementById('submit-btn');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+
+        // Disable button and show spinner
+        submitBtn.disabled = true;
+        buttonText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+
+        try {
+            const { paymentIntent, error } = await stripe.confirmCardPayment(
+                '{{ client_secret }}', {
+                    payment_method: { card: card },
+                }
+            );
+
+            if (error) {
+                const displayError = document.getElementById('card-errors');
+                displayError.textContent = error.message;
+                submitBtn.disabled = false;
+                buttonText.style.display = 'inline';
+                spinner.style.display = 'none';
+            } else if (paymentIntent.status === 'succeeded') {
+                // Payment succeeded — redirect to confirmation
+                window.location.href = '{% url "store:order_confirmation" order.order_number %}';
+            }
+        } catch (err) {
+            const displayError = document.getElementById('card-errors');
+            displayError.textContent = 'An unexpected error occurred. Please try again.';
+            submitBtn.disabled = false;
+            buttonText.style.display = 'inline';
+            spinner.style.display = 'none';
+        }
+    });
+</script>
+{% else %}
+<script>
+    function toggleOrderType() {
+        const delivery = document.querySelector('input[name="order_type"][value="delivery"]').checked;
+        const addressGroup = document.getElementById('addressGroup');
+        const postcodeGroup = document.getElementById('postcodeGroup');
+        const deliveryFeeRow = document.getElementById('deliveryFeeRow');
+
+        if (delivery) {
+            addressGroup.style.display = 'block';
+            postcodeGroup.style.display = 'block';
+            deliveryFeeRow.style.display = 'flex';
+            document.getElementById('address').required = true;
+            document.querySelector('input[name="order_type"][value="delivery"]').checked = true;
+        } else {
+            addressGroup.style.display = 'none';
+            postcodeGroup.style.display = 'none';
+            deliveryFeeRow.style.display = 'none';
+            document.getElementById('address').required = false;
+            document.querySelector('input[name="order_type"][value="collection"]').checked = true;
+        }
+
+        // Update labels
+        document.querySelectorAll('.type-option').forEach(el => {
+            el.classList.toggle('active', el.querySelector('input').checked);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleOrderType();
+    });
+</script>
+{% endif %}
+{% endblock %}
+

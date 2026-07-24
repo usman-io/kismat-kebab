@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<section class="section menu-page">
+    <div class="container">
+        <div class="menu-header">
+            <h1>{{ category.icon }} {{ category.name }}</h1>
+            {% if category.description %}
+            <p>{{ category.description }}</p>
+            {% else %}
+            <p>Explore our {{ category.name|lower }} selection</p>
+            {% endif %}
+        </div>
+
+        <div class="menu-layout">
+            <!-- Sidebar / Filters -->
+            <aside class="menu-sidebar" id="menuSidebar">
+                <div class="sidebar-section">
+                    <h3>Categories</h3>
+                    <ul class="category-nav">
+                        <li>
+                            <a href="{% url 'store:menu' %}" class="category-nav-link">All Items</a>
+                        </li>
+                        {% for cat in categories %}
+                        <li>
+                            <a href="{% url 'store:category' cat.slug %}" class="category-nav-link {% if cat.slug == category.slug %}active{% endif %}">
+                                {{ cat.icon }} {{ cat.name }}
+                                <span class="count">{{ cat.item_count }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Dietary Filters</h3>
+                    <form method="get" action="{% url 'store:category' category.slug %}" class="filter-form" id="filterForm">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" name="vegetarian" value="1" {% if filters.vegetarian %}checked{% endif %}>
+                            <span><i class="fas fa-seedling"></i> Vegetarian</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" name="vegan" value="1" {% if filters.vegan %}checked{% endif %}>
+                            <span><i class="fas fa-leaf"></i> Vegan</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" name="spicy" value="1" {% if filters.spicy %}checked{% endif %}>
+                            <span><i class="fas fa-pepper-hot"></i> Spicy</span>
+                        </label>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" name="gluten_free" value="1" {% if filters.gluten_free %}checked{% endif %}>
+                            <span><i class="fas fa-wheat-awn"></i> Gluten Free</span>
+                        </label>
+
+                        <button type="submit" class="btn btn-primary btn-sm btn-block" style="margin-top: 12px;">Apply Filters</button>
+                        <a href="{% url 'store:category' category.slug %}" class="btn btn-outline btn-sm btn-block" style="margin-top: 8px;">Clear All</a>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Main content -->
+            <div class="menu-content">
+                <!-- Sort Bar -->
+                <div class="menu-toolbar">
+                    <div class="sort-selector">
+                        <label for="sortSelect">Sort:</label>
+                        <select id="sortSelect" class="form-control sort-select" onchange="window.location.href=this.value">
+                            <option value="{% url 'store:category' category.slug %}?sort=default" {% if filters.sort == 'default' %}selected{% endif %}>Default</option>
+                            <option value="{% url 'store:category' category.slug %}?sort=price_low" {% if filters.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="{% url 'store:category' category.slug %}?sort=price_high" {% if filters.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="{% url 'store:category' category.slug %}?sort=name" {% if filters.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                        </select>
+                    </div>
+                    <div class="result-count">{{ result_count }} item{{ result_count|pluralize }}</div>
+                </div>
+
+                <!-- Items Grid -->
+                {% if items %}
+                <div class="menu-grid">
+                    {% for item in items %}
+                    <div class="menu-card" data-menu-item-id="{{ item.id }}">
+                        <a href="{% url 'store:menu_item' item.slug %}" class="menu-card-image">
+                            {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy">
+                            {% else %}
+                            <div class="menu-card-placeholder"><i class="fas fa-utensils" style="font-size:3rem;color:#ccc;"></i></div>
+                            {% endif %}
+                        </a>
+                        <div class="menu-card-body">
+                            <div class="menu-card-top">
+                                <h3><a href="{% url 'store:menu_item' item.slug %}">{{ item.name }}</a></h3>
+                                <span class="menu-card-price">{{ item.display_price }}</span>
+                            </div>
+                            <p class="menu-card-desc">{{ item.description|truncatechars:80 }}</p>
+                            <div class="menu-card-tags">
+                                {% for tag, cls in item.dietary_tags %}
+                                <span class="diet-tag {{ cls }}">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="menu-card-rating">
+                                {% if item.review_count > 0 %}
+                                <span class="mini-stars">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= item.avg_rating %}
+                                        <span class="star-filled">★</span>
+                                        {% else %}
+                                        <span class="star-empty">★</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="rating-text">({{ item.review_count }})</span>
+                                {% endif %}
+                            </div>
+                            <div class="menu-card-footer">
+                                <a href="{% url 'store:menu_item' item.slug %}" class="btn btn-primary btn-sm">Customise</a>
+                                <form method="post" action="{% url 'store:add_to_cart' %}" class="quick-add-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="menu_item_id" value="{{ item.id }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-outline btn-sm">+ Add</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon"><i class="fas fa-utensils"></i></span>
+                    <h3>No items in this category</h3>
+                    <p>Try adjusting your filter criteria.</p>
+                    <a href="{% url 'store:category' category.slug %}" class="btn btn-primary">View All {{ category.name }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.filter-checkbox input').forEach(cb => {
+        cb.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}
+

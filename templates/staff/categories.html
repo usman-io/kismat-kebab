@@ -1,0 +1,70 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Categories{% endblock %}
+{% block page_title %}Category Management{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <div></div>
+    <a href="{% url 'staff:category_add' %}" class="btn btn-primary btn-sm">+ Add Category</a>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if categories %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Icon</th>
+                        <th>Name</th>
+                        <th>Slug</th>
+                        <th>Items</th>
+                        <th>Sort Order</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                    <tr>
+                        <td><span style="font-size: 1.5rem;">{{ cat.icon|default:'🍽️' }}</span></td>
+                        <td><strong>{{ cat.name }}</strong></td>
+                        <td class="staff-text-muted">{{ cat.slug }}</td>
+                        <td>{{ cat.item_count }}</td>
+                        <td>{{ cat.sort_order }}</td>
+                        <td>
+                            {% if cat.is_active %}
+                            <span class="staff-badge staff-badge-available">Active</span>
+                            {% else %}
+                            <span class="staff-badge staff-badge-unavailable">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="staff-action-btns">
+                                <a href="{% url 'staff:category_edit' cat.id %}" class="btn btn-outline btn-sm">Edit</a>
+                                <form method="post" action="{% url 'staff:category_toggle_active' cat.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm {% if cat.is_active %}btn-outline{% else %}btn-primary{% endif %}">
+                                        {% if cat.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon">📂</span>
+            <h3>No Categories</h3>
+            <p>Create your first category to organise your menu items.</p>
+            <a href="{% url 'staff:category_add' %}" class="btn btn-primary">+ Add Category</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

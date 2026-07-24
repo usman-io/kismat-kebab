@@ -1,0 +1,108 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Menu Items{% endblock %}
+{% block page_title %}Menu Management{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <form method="get" class="staff-search-form">
+        <input type="text" name="q" class="form-control" placeholder="Search menu items..." value="{{ search_query }}">
+        <select name="category" class="form-control staff-select-filter">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if current_category == cat.id|slugify %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="availability" class="form-control staff-select-filter">
+            <option value="">All Items</option>
+            <option value="available" {% if current_availability == 'available' %}selected{% endif %}>Available</option>
+            <option value="unavailable" {% if current_availability == 'unavailable' %}selected{% endif %}>Unavailable</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        {% if search_query or current_category or current_availability %}
+        <a href="{% url 'staff:menu_list' %}" class="btn btn-outline btn-sm">Clear</a>
+        {% endif %}
+    </form>
+    <a href="{% url 'staff:menu_add' %}" class="btn btn-primary btn-sm">+ Add Item</a>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if items %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Featured</th>
+                        <th>Dietary</th>
+                        <th>Sort</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            {% if item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="staff-thumb">
+                            {% else %}
+                            <span class="staff-thumb-placeholder">🍽️</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'store:menu_item' item.slug %}" class="staff-link" target="_blank">{{ item.name }}</a>
+                        </td>
+                        <td>{{ item.category.name }}</td>
+                        <td>£{{ item.price|floatformat:2 }}</td>
+                        <td>
+                            {% if item.is_available %}
+                            <span class="staff-badge staff-badge-available">Available</span>
+                            {% else %}
+                            <span class="staff-badge staff-badge-unavailable">Unavailable</span>
+                            {% endif %}
+                        </td>
+                        <td>{% if item.is_featured %}⭐{% else %}—{% endif %}</td>
+                        <td>
+                            <div class="staff-dietary-tags">
+                                {% if item.is_vegetarian %}<span class="staff-diet-tag tag-veg">V</span>{% endif %}
+                                {% if item.is_vegan %}<span class="staff-diet-tag tag-vegan">VG</span>{% endif %}
+                                {% if item.is_spicy %}<span class="staff-diet-tag tag-spicy">🌶️</span>{% endif %}
+                                {% if item.is_gluten_free %}<span class="staff-diet-tag tag-gf">GF</span>{% endif %}
+                            </div>
+                        </td>
+                        <td>{{ item.sort_order }}</td>
+                        <td>
+                            <div class="staff-action-btns">
+                                <a href="{% url 'staff:menu_edit' item.id %}" class="btn btn-outline btn-sm">Edit</a>
+                                <form method="post" action="{% url 'staff:menu_toggle_availability' item.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm {% if item.is_available %}btn-outline{% else %}btn-primary{% endif %}">
+                                        {% if item.is_available %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon">🍔</span>
+            <h3>No Menu Items Found</h3>
+            <p>{% if search_query or current_category or current_availability %}Try adjusting your filters.{% else %}Start by adding your first menu item.{% endif %}</p>
+            {% if not search_query and not current_category and not current_availability %}
+            <a href="{% url 'staff:menu_add' %}" class="btn btn-primary">+ Add Menu Item</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

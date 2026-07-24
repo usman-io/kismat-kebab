@@ -1,0 +1,73 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <form method="get" class="staff-search-form">
+        <input type="text" name="q" class="form-control" placeholder="Search by name, email or phone..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        {% if search_query %}
+        <a href="{% url 'staff:customer_list' %}" class="btn btn-outline btn-sm">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if customers %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Verified</th>
+                        <th>Orders</th>
+                        <th>Total Spent</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <div class="staff-customer-info">
+                                <span class="staff-user-avatar">{{ customer.first_name|first|default:customer.email|first|upper }}</span>
+                                <span>{{ customer.full_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone|default:'—' }}</td>
+                        <td>
+                            {% if customer.is_email_verified %}
+                            <span class="staff-badge staff-badge-available">Verified</span>
+                            {% else %}
+                            <span class="staff-badge staff-badge-unavailable">Unverified</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ customer.order_count }}</td>
+                        <td>£{{ customer.total_spent|default:'0.00'|floatformat:2 }}</td>
+                        <td class="staff-text-muted">{{ customer.created_at|date:'d M Y' }}</td>
+                        <td>
+                            <a href="{% url 'staff:customer_detail' customer.id %}" class="btn btn-outline btn-sm">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon">👥</span>
+            <h3>No Customers Found</h3>
+            <p>{% if search_query %}Try a different search term.{% else %}There are no registered customers yet.{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

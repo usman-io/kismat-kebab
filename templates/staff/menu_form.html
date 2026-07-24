@@ -1,0 +1,97 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}{% if is_new %}Add Menu Item{% else %}Edit Menu Item{% endif %}{% endblock %}
+{% block page_title %}{% if is_new %}Add Menu Item{% else %}Edit: {{ item.name }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="staff-detail-actions">
+    <a href="{% url 'staff:menu_list' %}" class="btn btn-outline btn-sm">← Back to Menu</a>
+</div>
+
+<div class="staff-form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="staff-form-grid">
+            <div class="staff-form-group">
+                <label for="name">Item Name *</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ item.name|default:'' }}" required>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="category">Category *</label>
+                <select id="category" name="category" class="form-control" required>
+                    <option value="">Select a category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="staff-form-group staff-form-full">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3">{{ item.description|default:'' }}</textarea>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="price">Price (£) *</label>
+                <input type="number" id="price" name="price" class="form-control" step="0.01" min="0" value="{{ item.price|default:'' }}" required>
+            </div>
+
+            <div class="staff-form-group">
+                <label for="prep_time_minutes">Prep Time (minutes)</label>
+                <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control" min="1" value="{{ item.prep_time_minutes|default:'15' }}">
+            </div>
+
+            <div class="staff-form-group">
+                <label for="calories">Calories</label>
+                <input type="number" id="calories" name="calories" class="form-control" min="0" value="{{ item.calories|default:'' }}">
+            </div>
+
+            <div class="staff-form-group staff-form-full">
+                <label for="image">Image</label>
+                {% if item.image %}
+                <div class="staff-current-image">
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" style="max-width: 120px; border-radius: 6px; margin-bottom: 8px;">
+                </div>
+                {% endif %}
+                <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="staff-form-toggles">
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_available" {% if item.is_available or is_new %}checked{% endif %}>
+                <span>Available</span>
+            </label>
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_featured" {% if item.is_featured %}checked{% endif %}>
+                <span>Featured</span>
+            </label>
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_vegetarian" {% if item.is_vegetarian %}checked{% endif %}>
+                <span>Vegetarian</span>
+            </label>
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_vegan" {% if item.is_vegan %}checked{% endif %}>
+                <span>Vegan</span>
+            </label>
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_spicy" {% if item.is_spicy %}checked{% endif %}>
+                <span>Spicy</span>
+            </label>
+            <label class="staff-toggle">
+                <input type="checkbox" name="is_gluten_free" {% if item.is_gluten_free %}checked{% endif %}>
+                <span>Gluten Free</span>
+            </label>
+        </div>
+
+        <div class="staff-form-actions">
+            <button type="submit" class="btn btn-primary">{% if is_new %}Create Item{% else %}Save Changes{% endif %}</button>
+            <a href="{% url 'staff:menu_list' %}" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

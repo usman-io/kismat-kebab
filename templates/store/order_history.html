@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<section class="section order-history-page">
+    <div class="container">
+        <div class="order-history-header">
+        <h1><i class="fas fa-clipboard-list"></i> My Orders</h1>
+            <p>View your past and current orders</p>
+        </div>
+
+        {% if orders %}
+        <div class="order-list">
+            {% for order in orders %}
+            <div class="order-history-card">
+                <div class="order-history-top">
+                    <div>
+                        <h3><a href="{% url 'store:order_detail' order.order_number %}">Order #{{ order.order_number }}</a></h3>
+                        <p class="order-history-date">{{ order.created_at|date:"j F Y, g:i A" }}</p>
+                    </div>
+                    <span class="order-status-badge status-{{ order.status }}">{{ order.status_label }}</span>
+                </div>
+                <div class="order-history-items">
+                    {% for item in order.items.all|slice:":3" %}
+                    <span class="order-history-item">{{ item.quantity }}x {{ item.menu_item_name }}</span>
+                    {% endfor %}
+                    {% if order.items.count > 3 %}
+                    <span class="order-history-more">+{{ order.items.count|add:"-3" }} more</span>
+                    {% endif %}
+                </div>
+                <div class="order-history-footer">
+                    <span class="order-history-total">£{{ order.total|floatformat:2 }}</span>
+                    <div class="order-history-actions">
+                        <a href="{% url 'store:order_detail' order.order_number %}" class="btn btn-outline btn-sm">Details</a>
+                        <a href="{% url 'store:order_tracking' order.order_number %}" class="btn btn-outline btn-sm">Track</a>
+                        {% if order.can_reorder %}
+                        <form method="post" action="{% url 'store:repeat_order' order.order_number %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-redo"></i> Repeat</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+                    <span class="empty-icon"><i class="fas fa-clipboard-list"></i></span>
+            <h3>No orders yet</h3>
+            <p>You haven't placed any orders yet. Browse our menu and place your first order!</p>
+            <a href="{% url 'store:menu' %}" class="btn btn-primary btn-lg">Browse Menu</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

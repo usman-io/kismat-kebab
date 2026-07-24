@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ item.name }}{% endblock %}
+
+{% block content %}
+<section class="section product-page">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="{% url 'store:menu' %}">Menu</a>
+            <span>/</span>
+            <a href="{% url 'store:category' item.category.slug %}">{{ item.category.name }}</a>
+            <span>/</span>
+            <span>{{ item.name }}</span>
+        </nav>
+
+        <div class="product-layout">
+            <!-- Product Image -->
+            <div class="product-image-col">
+                <div class="product-image-card">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                    <div class="product-image-placeholder"><i class="fas fa-utensils" style="font-size:5rem;color:#ccc;"></i></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="product-details-col">
+                <div class="product-header">
+                    <div class="product-title-row">
+                        <h1>{{ item.name }}</h1>
+                        {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'store:toggle_favourite' %}" class="favourite-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="menu_item_id" value="{{ item.id }}">
+                            <button type="submit" class="btn-favourite {% if user_favourite %}active{% endif %}" title="Save to favourites">
+                                {% if user_favourite %}<i class="fas fa-heart"></i>{% else %}<i class="far fa-heart"></i>{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="product-price">£{{ item.price }}</div>
+                </div>
+
+                {% if item.description %}
+                <p class="product-description">{{ item.description }}</p>
+                {% endif %}
+
+                <!-- Dietary Tags -->
+                <div class="product-tags">
+                    {% for tag, cls in item.dietary_tags %}
+                    <span class="diet-tag {{ cls }}">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+
+                <!-- Ratings -->
+                <div class="product-rating">
+                    <div class="stars-display">
+                        {% if avg_rating %}
+                        {% with rounded=avg_rating|floatformat:0 %}
+                        {% for i in "12345" %}
+                            <span class="star {% if forloop.counter <= rounded %}star-filled{% else %}star-empty{% endif %}">★</span>
+                        {% endfor %}
+                        {% endwith %}
+                        <span class="rating-text">{{ avg_rating|floatformat:1 }} ({{ review_count }} review{{ review_count|pluralize }})</span>
+                        {% else %}
+                        <span class="rating-text">No reviews yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Prep time & calories -->
+                <div class="product-info-bar">
+                    <span><i class="fas fa-clock"></i> {{ item.prep_time_minutes }} min</span>
+                    {% if item.calories %}
+                    <span><i class="fas fa-fire"></i> {{ item.calories }} cal</span>
+                    {% endif %}
+                </div>
+
+                <!-- Add to Cart Form -->
+                <form method="post" action="{% url 'store:add_to_cart' %}" class="add-to-cart-form" id="addToCartForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="menu_item_id" value="{{ item.id }}">
+                    <input type="hidden" name="next" value="{% url 'store:menu_item' item.slug %}">
+
+                    <!-- Extras & Toppings -->
+                    {% if extra_groups %}
+                    <div class="extras-section">
+                        <h3>Extras & Toppings</h3>
+                        {% for group in extra_groups %}
+                        <div class="extra-group" data-group-id="{{ group.id }}" data-max="{{ group.max_selections }}" data-min="{{ group.min_selections }}" data-required="{{ group.is_required|lower }}">
+                            <div class="extra-group-header">
+                                <h4>{{ group.name }}</h4>
+                                <span class="extra-group-label">{{ group.selection_label }}</span>
+                            </div>
+                            {% if group.description %}
+                            <p class="extra-group-desc">{{ group.description }}</p>
+                            {% endif %}
+                            <div class="extra-options">
+                                {% for option in group.options.all %}
+                                {% if option.is_available %}
+                                <label class="extra-option">
+                                    <input
+                                        type="{% if group.max_selections == 1 %}radio{% else %}checkbox{% endif %}"
+                                        name="extras"
+                                        value="{{ option.id }}"
+                                        class="extra-input"
+                                        data-group="{{ group.id }}"
+                                        data-price="{{ option.price }}"
+                                        {% if option.is_default %}checked{% endif %}
+                                    >
+                                    <div class="extra-option-content">
+                                        <span class="extra-option-name">{{ option.name }}</span>
+                                        <span class="extra-option-price">{{ option.display_price }}</span>
+                                    </div>
+                                </label>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Quantity & Special Instructions -->
+                    <div class="product-actions">
+                        <div class="quantity-selector">
+                            <button type="button" class="qty-btn" onclick="decrementQty()">−</button>
+                            <input type="number" name="quantity" id="itemQty" value="1" min="1" max="20" class="qty-input">
+                            <button type="button" class="qty-btn" onclick="incrementQty()">+</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Add to Cart — <span id="totalPrice">£{{ item.price }}</span></button>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label for="instructions">Special Instructions</label>
+                        <textarea name="instructions" id="instructions" class="form-control" rows="2" placeholder="Any special requests..." maxlength="500"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h2>Reviews</h2>
+            <p style="color:var(--color-text-muted);margin-bottom:16px;">
+                Reviews can only be submitted after an order is completed. Go to <a href="{% url 'store:order_history' %}">My Orders</a> to review your purchases.
+            </p>
+
+            <div class="reviews-list">
+                {% for review in reviews %}
+                <div class="review-card">
+                    <div class="review-header">
+                        <span class="review-author">{{ review.user.full_name|default:review.user.email }}</span>
+                        <span class="review-stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                <span class="star star-filled">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        <span class="review-date">{{ review.created_at|date:"j M Y" }}</span>
+                    </div>
+                    {% if review.comment %}
+                    <p class="review-comment">{{ review.comment }}</p>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="no-reviews">No reviews yet. Be the first to review!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Related Items -->
+        {% if related_items %}
+        <section class="related-section">
+            <h2>You Might Also Like</h2>
+            <div class="related-grid">
+                {% for related in related_items %}
+                <div class="menu-card">
+                    <a href="{% url 'store:menu_item' related.slug %}" class="menu-card-image">
+                        {% if related.image %}
+                        <img src="{{ related.image.url }}" alt="{{ related.name }}" loading="lazy">
+                        {% else %}
+                    <div class="menu-card-placeholder"><i class="fas fa-utensils" style="font-size:3rem;color:#ccc;"></i></div>
+                        {% endif %}
+                    </a>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3><a href="{% url 'store:menu_item' related.slug %}">{{ related.name }}</a></h3>
+                            <span class="menu-card-price">{{ related.display_price }}</span>
+                        </div>
+                        <div class="menu-card-footer">
+                            <a href="{% url 'store:menu_item' related.slug %}" class="btn btn-primary btn-sm">View</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const basePrice = parseFloat('{{ item.price }}');
+    const qtyInput = document.getElementById('itemQty');
+    const totalPriceSpan = document.getElementById('totalPrice');
+
+    function calculateTotal() {
+        let extrasTotal = 0;
+        document.querySelectorAll('.extra-input:checked').forEach(el => {
+            extrasTotal += parseFloat(el.dataset.price || 0);
+        });
+        const qty = parseInt(qtyInput.value) || 1;
+        const total = (basePrice + extrasTotal) * qty;
+        totalPriceSpan.textContent = '£' + total.toFixed(2);
+    }
+
+    function decrementQty() {
+        let val = parseInt(qtyInput.value) || 1;
+        if (val > 1) qtyInput.value = val - 1;
+        calculateTotal();
+    }
+
+    function incrementQty() {
+        let val = parseInt(qtyInput.value) || 1;
+        if (val < 20) qtyInput.value = val + 1;
+        calculateTotal();
+    }
+
+    qtyInput.addEventListener('change', calculateTotal);
+    document.querySelectorAll('.extra-input').forEach(el => {
+        el.addEventListener('change', function() {
+            // Enforce max selections per group
+            const group = this.closest('.extra-group');
+            const max = parseInt(group.dataset.max);
+            const inputs = group.querySelectorAll('.extra-input:checked');
+            if (max > 0 && inputs.length > max) {
+                this.checked = false;
+            }
+            calculateTotal();
+        });
+    });
+
+    calculateTotal();
+</script>
+{% endblock %}
+

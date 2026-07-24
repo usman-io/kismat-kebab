@@ -1,0 +1,82 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Discounts & Promo Codes{% endblock %}
+{% block page_title %}Discounts & Promo Codes{% endblock %}
+
+{% block content %}
+<div class="staff-toolbar">
+    <div></div>
+    <a href="{% url 'staff:coupon_add' %}" class="btn btn-primary btn-sm">+ Add Promo Code</a>
+</div>
+
+<div class="staff-card">
+    <div class="staff-card-body">
+        {% if coupons %}
+        <div class="staff-table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Min. Spend</th>
+                        <th>Uses</th>
+                        <th>Valid From</th>
+                        <th>Valid Until</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td><strong>{{ coupon.code }}</strong></td>
+                        <td>{{ coupon.get_discount_type_display }}</td>
+                        <td>
+                            {% if coupon.discount_type == 'percentage' %}
+                                {{ coupon.discount_value|floatformat:0 }}%
+                            {% else %}
+                                £{{ coupon.discount_value|floatformat:2 }}
+                            {% endif %}
+                        </td>
+                        <td>£{{ coupon.min_spend|floatformat:2 }}</td>
+                        <td>{{ coupon.current_uses }}{% if coupon.max_uses > 0 %}/{{ coupon.max_uses }}{% endif %}</td>
+                        <td class="staff-text-muted">{{ coupon.valid_from|date:'d M Y' }}</td>
+                        <td class="staff-text-muted">{{ coupon.valid_until|date:'d M Y' }}</td>
+                        <td>
+                            {% if coupon.is_active and coupon.is_valid %}
+                            <span class="staff-badge staff-badge-available">Active</span>
+                            {% elif coupon.is_active and not coupon.is_valid %}
+                            <span class="staff-badge staff-badge-unavailable">Expired</span>
+                            {% else %}
+                            <span class="staff-badge staff-badge-cancelled">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="staff-action-btns">
+                                <a href="{% url 'staff:coupon_edit' coupon.id %}" class="btn btn-outline btn-sm">Edit</a>
+                                <form method="post" action="{% url 'staff:coupon_toggle_active' coupon.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline">
+                                        {% if coupon.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="staff-empty-state">
+            <span class="staff-empty-icon">🏷️</span>
+            <h3>No Promo Codes</h3>
+            <p>Create your first promo code to offer discounts to customers.</p>
+            <a href="{% url 'staff:coupon_add' %}" class="btn btn-primary">+ Add Promo Code</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

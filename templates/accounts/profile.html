@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="auth-card" style="max-width: 600px; margin: 0 auto;">
+            <div class="auth-header">
+                <h1>My Account</h1>
+                <p>Signed in as {{ user.email }}</p>
+            </div>
+
+            <div class="profile-details">
+                <div class="profile-row">
+                    <span class="profile-label">Name</span>
+                    <span>{{ user.full_name }}</span>
+                </div>
+                {% if user.phone %}
+                <div class="profile-row">
+                    <span class="profile-label">Phone</span>
+                    <span>{{ user.phone }}</span>
+                </div>
+                {% endif %}
+                <div class="profile-row">
+                    <span class="profile-label">Email verified</span>
+                    <span>{% if user.is_email_verified %}<i class="fas fa-check-circle" style="color:var(--color-success)"></i> Yes{% else %}<i class="fas fa-times-circle" style="color:var(--color-error)"></i> No{% endif %}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Member since</span>
+                    <span>{{ user.created_at|date:"j F Y" }}</span>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'accounts:logout' %}" style="margin-top: 24px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-block">Sign Out</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

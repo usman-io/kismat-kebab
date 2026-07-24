@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<section class="section cart-page">
+    <div class="container">
+        <div class="cart-header">
+            <h1>Your Cart</h1>
+            <span class="cart-count">{{ cart_data.item_count }} item{{ cart_data.item_count|pluralize }}</span>
+        </div>
+
+        {% if cart_data.cart_items %}
+        <div class="cart-layout">
+            <!-- Cart Items -->
+            <div class="cart-items-col">
+                {% for item in cart_data.cart_items %}
+                <div class="cart-item" data-cart-item-id="{{ item.id }}">
+                    <div class="cart-item-image">
+                        {% if item.menu_item.image %}
+                        <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}">
+                        {% else %}
+                        <div class="cart-item-placeholder"><i class="fas fa-utensils" style="font-size:2rem;color:#ccc;"></i></div>
+                        {% endif %}
+                    </div>
+                    <div class="cart-item-details">
+                        <h3>{{ item.menu_item.name }}</h3>
+                        {% if item.selected_extras %}
+                        <div class="cart-item-extras">
+                            {% for extra in item.selected_extras %}
+                            <span class="extra-tag">{{ extra.name }} {% if extra.price > 0 %}(+£{{ extra.price }}){% endif %}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if item.special_instructions %}
+                        <p class="cart-item-notes"><i class="fas fa-pen"></i> {{ item.special_instructions }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="cart-item-quantity">
+                        <form method="post" action="{% url 'store:update_cart' %}" class="qty-update-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="cart_item_id" value="{{ item.id }}">
+                            <button type="button" class="qty-btn" onclick="decrementCartQty(this)">−</button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="20" class="qty-input cart-qty-input" readonly>
+                            <button type="button" class="qty-btn" onclick="incrementCartQty(this)">+</button>
+                            <input type="hidden" name="next" value="{% url 'store:cart' %}">
+                        </form>
+                    </div>
+                    <div class="cart-item-total">
+                        <span class="cart-item-price">£{{ item.total_price|floatformat:2 }}</span>
+                        <small>£{{ item.unit_price }} each</small>
+                    </div>
+                    <div class="cart-item-remove">
+                        <form method="post" action="{% url 'store:remove_from_cart' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="cart_item_id" value="{{ item.id }}">
+                            <button type="submit" class="btn-remove" title="Remove item">✕</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="cart-actions-top">
+                    <a href="{% url 'store:menu' %}" class="btn btn-outline">← Continue Shopping</a>
+                    <form method="post" action="{% url 'store:cart' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);">Clear Cart</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="cart-summary-col">
+                <div class="cart-summary-card">
+                    <h3>Order Summary</h3>
+
+                    <div class="summary-row">
+                        <span>Subtotal ({{ cart_data.item_count }} item{{ cart_data.item_count|pluralize }})</span>
+                        <span>£{{ cart_data.subtotal|floatformat:2 }}</span>
+                    </div>
+
+                    {% if cart_data.discount > 0 %}
+                    <div class="summary-row summary-discount">
+                        <span>Discount</span>
+                        <span>-£{{ cart_data.discount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span>£{{ cart_data.total|floatformat:2 }}</span>
+                    </div>
+
+                    <!-- Coupon -->
+                    <div class="coupon-section">
+                        {% if cart_data.coupon %}
+                        <div class="coupon-applied">
+                            <span>✅ {{ cart_data.coupon.code }}</span>
+                            <form method="post" action="{% url 'store:remove_coupon' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-remove-coupon">✕</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <details class="coupon-toggle">
+                            <summary>Have a coupon?</summary>
+                            <form method="post" action="{% url 'store:apply_coupon' %}" class="coupon-form">
+                                {% csrf_token %}
+                                <div class="coupon-input-group">
+                                    <input type="text" name="code" class="form-control" placeholder="Enter code" required>
+                                    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                                </div>
+                            </form>
+                        </details>
+                        {% endif %}
+                    </div>
+
+                    <a href="{% url 'store:checkout' %}" class="btn btn-primary btn-lg btn-block" style="margin-top: 16px;">
+                        Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🛒</span>
+            <h3>Your cart is empty</h3>
+            <p>Looks like you haven't added anything yet. Browse our menu to find something delicious!</p>
+            <a href="{% url 'store:menu' %}" class="btn btn-primary btn-lg">Browse Menu</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function decrementCartQty(btn) {
+        const form = btn.closest('.qty-update-form');
+        const input = form.querySelector('.cart-qty-input');
+        let val = parseInt(input.value) || 1;
+        if (val > 1) {
+            input.value = val - 1;
+            form.submit();
+        } else {
+            // Remove item
+            const removeForm = btn.closest('.cart-item').querySelector('.cart-item-remove form');
+            if (removeForm) removeForm.submit();
+        }
+    }
+
+    function incrementCartQty(btn) {
+        const form = btn.closest('.qty-update-form');
+        const input = form.querySelector('.cart-qty-input');
+        let val = parseInt(input.value) || 1;
+        if (val < 20) {
+            input.value = val + 1;
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero hero-with-bg">
+    <div class="hero-bg" style="background-image: url('{% static "images/homeheader.jpg" %}');"></div>
+    <div class="hero-overlay"></div>
+
+    <div class="container hero-inner">
+        <div class="hero-content">
+            <h1>
+                Craving Something
+                <span class="text-accent">Delicious?</span>
+            </h1>
+            <p class="hero-subtitle">
+                Hand made burgers, kebabs & pizzas fired up fresh and
+                delivered hot to your door, or ready for collection in minutes.
+            </p>
+            <div class="hero-actions">
+                <a href="{% url 'store:menu' %}" class="btn btn-primary btn-lg btn-glow">Order Now</a>
+                <a href="{% url 'store:menu' %}?sort=price_low" class="btn btn-outline-light btn-lg">View Deals</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <strong>30 min</strong>
+                    <span>Avg. delivery</span>
+                </div>
+                <div class="stat">
+                    <strong>4.8★</strong>
+                    <span>Customer rating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-scroll-cue">
+        <span></span>
+    </div>
+</section>
+
+<section class="section hours-strip">
+    <div class="container hours-strip-inner">
+        <div class="hours-block">
+            <h3><span class="hours-icon"><i class="fas fa-clock"></i></span> Opening Hours</h3>
+            <table class="hours-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Delivery</th>
+                        <th>Pick-up</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Monday</td><td class="closed">Closed</td><td class="closed">Closed</td></tr>
+                    <tr><td>Tuesday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                    <tr class="today"><td>Wednesday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                    <tr><td>Thursday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                    <tr><td>Friday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                    <tr><td>Saturday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                    <tr><td>Sunday</td><td>16:00 – 22:00</td><td>16:00 – 23:00</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="hours-block contact-block">
+            <h3><span class="hours-icon"></span> Contact Us</h3>
+            <div class="contact-card">
+                <h4>Kismat Takeaway</h4>
+                <p><span class="contact-icon"><i class="fas fa-map-marker-alt"></i></span> 98 King St, Cottingham HU16 5QE Hull, England </p>
+                <p><span class="contact-icon"><i class="fas fa-phone"></i></span> <a href="tel:1482 876676">01482 876676</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if categories %}
+<section class="section categories-preview">
+    <div class="container">
+        <h2 class="section-title">Popular Categories</h2>
+        <p class="section-subtitle">Choose from our wide selection of freshly prepared food</p>
+        <div class="category-grid">
+            {% for cat in categories %}
+            <a href="{% url 'store:category' cat.slug %}" class="category-card">
+                <span class="category-icon">{{ cat.icon|default:"<i class='fas fa-utensils'></i>" }}</span>
+                <h3>{{ cat.name }}</h3>
+                {% if cat.item_count > 0 %}
+                <span class="category-count">{{ cat.item_count }} item{{ cat.item_count|pluralize }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        <div class="text-center" style="margin-top: 32px;">
+            <a href="{% url 'store:menu' %}" class="btn btn-outline btn-lg">View Full Menu →</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if featured_items %}
+<section class="section featured-preview">
+    <div class="container">
+        <h2 class="section-title"><i class="fas fa-fire"></i> Featured Items</h2>
+        <p class="section-subtitle">Our most popular dishes, hand-picked for you</p>
+        <div class="featured-grid">
+            {% for item in featured_items %}
+            <div class="menu-card featured-card">
+                <a href="{% url 'store:menu_item' item.slug %}" class="menu-card-image">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy">
+                    {% else %}
+                    <div class="menu-card-placeholder"><i class="fas fa-utensils" style="font-size:3rem;color:#ccc;"></i></div>
+                    {% endif %}
+                </a>
+                <div class="menu-card-body">
+                    <div class="menu-card-top">
+                        <h3><a href="{% url 'store:menu_item' item.slug %}">{{ item.name }}</a></h3>
+                        <span class="menu-card-price">{{ item.display_price }}</span>
+                    </div>
+                    <p class="menu-card-desc">{{ item.description|truncatechars:80 }}</p>
+                    <div class="menu-card-tags">
+                        {% for tag, cls in item.dietary_tags %}
+                        <span class="diet-tag {{ cls }}">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="menu-card-rating">
+                        {% if item.review_count %}
+                        <span class="mini-stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= item.avg_rating %}
+                                <span class="star-filled">★</span>
+                                {% else %}
+                                <span class="star-empty">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        <span class="rating-text">({{ item.review_count }})</span>
+                        {% endif %}
+                    </div>
+                    <div class="menu-card-footer">
+                        <a href="{% url 'store:menu_item' item.slug %}" class="btn btn-primary btn-sm">Customise & Add</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

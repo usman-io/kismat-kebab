@@ -1,0 +1,148 @@
+{% extends 'staff/base_staff.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="staff-stats-grid">
+    <div class="staff-stat-card">
+        <div class="staff-stat-icon stat-icon-orders"><i class="fas fa-clipboard-list"></i></div>
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ today_orders_count }}</span>
+            <span class="staff-stat-label">Orders Today</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-icon stat-icon-pending"><i class="fas fa-hourglass-half"></i></div>
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ pending_orders_count }}</span>
+            <span class="staff-stat-label">Pending Orders</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-icon stat-icon-revenue"><i class="fas fa-pound-sign"></i></div>
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">£{{ today_revenue|floatformat:2 }}</span>
+            <span class="staff-stat-label">Revenue Today</span>
+        </div>
+    </div>
+    <div class="staff-stat-card">
+        <div class="staff-stat-icon stat-icon-menu"><i class="fas fa-utensils"></i></div>
+        <div class="staff-stat-content">
+            <span class="staff-stat-value">{{ available_items }}/{{ total_menu_items }}</span>
+            <span class="staff-stat-label">Items Available</span>
+        </div>
+    </div>
+</div>
+
+<div class="staff-dashboard-grid">
+    <!-- Order Status Overview -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Orders by Status</h3>
+        </div>
+        <div class="staff-card-body">
+            <div class="status-overview-grid">
+                {% for status, count in status_counts.items %}
+                <div class="status-overview-item">
+                    <span class="status-dot status-{{ status }}"></span>
+                    <span class="status-label">{{ status|title }}</span>
+                    <span class="status-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Selling Items -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3><i class="fas fa-fire"></i> Top Selling Items (30 days)</h3>
+        </div>
+        <div class="staff-card-body">
+            {% if top_items %}
+            <ol class="staff-top-items">
+                {% for item in top_items %}
+                <li>
+                    <span class="top-item-name">{{ item.menu_item_name }}</span>
+                    <span class="top-item-qty">{{ item.total_qty }} sold</span>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <p class="staff-empty-text">No sales data for the last 30 days.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="staff-dashboard-grid">
+    <!-- Recent Orders -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3>Recent Orders</h3>
+            <a href="{% url 'staff:order_list' %}" class="staff-card-link">View All →</a>
+        </div>
+        <div class="staff-card-body">
+            {% if recent_orders %}
+            <div class="staff-table-responsive">
+                <table class="staff-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td><a href="{% url 'staff:order_detail' order.order_number %}" class="staff-link">{{ order.order_number }}</a></td>
+                            <td>{{ order.user.full_name|default:'Guest' }}</td>
+                            <td><span class="staff-badge staff-badge-{{ order.status }}">{{ order.status_label }}</span></td>
+                            <td>£{{ order.total|floatformat:2 }}</td>
+                            <td class="staff-text-muted">{{ order.created_at|timesince }} ago</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="staff-empty-text">No orders yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Reviews -->
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h3><i class="fas fa-comment"></i> Pending Reviews</h3>
+            <a href="{% url 'staff:review_list' %}" class="staff-card-link">View All →</a>
+        </div>
+        <div class="staff-card-body">
+            {% if recent_reviews %}
+            {% for review in recent_reviews %}
+            <div class="staff-review-item">
+                <div class="staff-review-header">
+                    <strong>{{ review.user.full_name }}</strong>
+                    <span class="staff-review-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                <p class="staff-review-text">"{{ review.comment|truncatechars:80 }}"</p>
+                <span class="staff-review-item-name">on {{ review.menu_item.name }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="staff-empty-text">No pending reviews.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

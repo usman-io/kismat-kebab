@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if user %}Email Verified{% else %}Verification Failed{% endif %}{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-card auth-card-centered">
+            {% if user %}
+            <div class="auth-icon auth-icon-success">✓</div>
+            <div class="auth-header">
+                <h1>Email verified!</h1>
+                <p>Your account is ready, {{ user.first_name|default:"there" }}.</p>
+            </div>
+            <p class="auth-info">You can now sign in and start ordering from {{ SITE_NAME }}.</p>
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-block">Sign In Now</a>
+            {% else %}
+            <div class="auth-icon auth-icon-error">✕</div>
+            <div class="auth-header">
+                <h1>Verification failed</h1>
+                <p>{{ error }}</p>
+            </div>
+            <a href="{% url 'accounts:resend_verification' %}" class="btn btn-primary btn-block">
+                Request New Link
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-block" style="margin-top: 12px;">
+                Back to Sign In
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<section class="section order-detail-page">
+    <div class="container">
+        <div class="order-detail-header">
+            <h1>Order #{{ order.order_number }}</h1>
+            <span class="order-status-badge status-{{ order.status }}">{{ order.status_label }}</span>
+        </div>
+
+        <div class="order-detail-layout">
+            <!-- Order Info -->
+            <div class="order-info-col">
+                <div class="order-card">
+                    <h3>Order Information</h3>
+                    <div class="order-info-row">
+                        <span>Date</span>
+                        <span>{{ order.created_at|date:"j F Y, g:i A" }}</span>
+                    </div>
+                    <div class="order-info-row">
+                        <span>Type</span>
+                        <span>{{ order.get_order_type_display }}</span>
+                    </div>
+                    {% if order.delivery_name %}
+                    <div class="order-info-row">
+                        <span>Name</span>
+                        <span>{{ order.delivery_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if order.delivery_address %}
+                    <div class="order-info-row">
+                        <span>Address</span>
+                        <span>{{ order.delivery_address }}{% if order.delivery_postcode %}, {{ order.delivery_postcode }}{% endif %}</span>
+                    </div>
+                    {% endif %}
+                    {% if order.delivery_phone %}
+                    <div class="order-info-row">
+                        <span>Phone</span>
+                        <span>{{ order.delivery_phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if order.delivery_notes %}
+                    <div class="order-info-row">
+                        <span>Notes</span>
+                        <span>{{ order.delivery_notes }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Status Timeline -->
+                <div class="order-card">
+                    <h3>Status Timeline</h3>
+                    <div class="status-timeline">
+                        <div class="timeline-item {% if order.status != 'cancelled' %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>Order Placed</strong>
+                                <span>{{ order.created_at|date:"g:i A" }}</span>
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if order.confirmed_at %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>Confirmed</strong>
+                                {% if order.confirmed_at %}<span>{{ order.confirmed_at|date:"g:i A" }}</span>{% endif %}
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if order.preparing_at %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>Preparing</strong>
+                                {% if order.preparing_at %}<span>{{ order.preparing_at|date:"g:i A" }}</span>{% endif %}
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if order.ready_at %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>Ready</strong>
+                                {% if order.ready_at %}<span>{{ order.ready_at|date:"g:i A" }}</span>{% endif %}
+                            </div>
+                        </div>
+                        {% if order.order_type == 'delivery' %}
+                        <div class="timeline-item {% if order.out_for_delivery_at %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>Out for Delivery</strong>
+                                {% if order.out_for_delivery_at %}<span>{{ order.out_for_delivery_at|date:"g:i A" }}</span>{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="timeline-item {% if order.completed_at %}completed{% endif %}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <strong>{{ order.get_order_type_display }}d</strong>
+                                {% if order.completed_at %}<span>{{ order.completed_at|date:"g:i A" }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if order.is_cancellable %}
+                <div class="order-card">
+                    <form method="post" action="{% url 'store:cancel_order' order.order_number %}" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline" style="color:var(--color-error);border-color:var(--color-error);width:100%;">Cancel Order</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if order.can_reorder %}
+                <div class="order-card">
+                    <form method="post" action="{% url 'store:repeat_order' order.order_number %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-redo"></i> Repeat This Order</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Order Items -->
+            <div class="order-items-col">
+                <div class="order-card">
+                    <h3>Items ({{ order.items.count }})</h3>
+                    {% for item in order.items.all %}
+                    <div class="order-item">
+                        <div class="order-item-qty">{{ item.quantity }}x</div>
+                        <div class="order-item-details">
+                            <strong>{{ item.menu_item_name }}</strong>
+                            {% if item.extras_data %}
+                            <div class="order-item-extras">
+                                {% for extra in item.extras_data %}
+                                <span>{{ extra.name }}{% if extra.price and extra.price != '0.00' %} (+£{{ extra.price }}){% endif %}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="order-item-price">£{{ item.total_price|floatformat:2 }}</div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>£{{ order.subtotal|floatformat:2 }}</span>
+                    </div>
+                    {% if order.discount_amount > 0 %}
+                    <div class="summary-row summary-discount">
+                        <span>Discount</span>
+                        <span>-£{{ order.discount_amount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    {% if order.delivery_fee > 0 %}
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <span>£{{ order.delivery_fee|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span>£{{ order.total|floatformat:2 }}</span>
+                    </div>
+
+                    {% if order.coupon %}
+                    <p style="font-size:0.85rem;color:var(--color-text-muted);margin-top:8px;">
+                        Coupon applied: {{ order.coupon.code }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                    <a href="{% url 'store:order_tracking' order.order_number %}" class="btn btn-primary btn-lg btn-block" style="margin-top:16px;">
+                    <i class="fas fa-map-marker-alt"></i> Live Tracking
+                </a>
+            </div>
+        </div>
+
+        {% if can_review %}
+        <div class="order-card" style="margin-top:24px;">
+            <h3>Leave a Review</h3>
+            <p style="color:var(--color-text-muted);margin-bottom:16px;">
+                Rate your experience — the same rating will be applied to <strong>all items</strong> in this order.
+            </p>
+            {% if order.reviews.exists %}
+            <div class="staff-review-item" style="padding:12px;background:#f9fafb;border-radius:8px;margin-bottom:16px;">
+                <p style="font-size:0.9rem;color:var(--color-text-muted);margin-bottom:4px;">Your current review:</p>
+                <div class="staff-review-stars">
+                    {% for review in order.reviews.all|slice:":1" %}
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                        {% if review.comment %} — "{{ review.comment }}"{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'store:add_order_review' order.order_number %}" class="review-form">
+                {% csrf_token %}
+                <div class="star-rating">
+                    <span class="star-rating-label">Your Rating:</span>
+                    <div class="stars-input">
+                        {% for i in "54321" %}
+                        <input type="radio" name="rating" value="{{ i }}" id="order-star-{{ i }}" {% if forloop.first %}checked{% endif %}>
+                        <label for="order-star-{{ i }}" title="{{ i }} stars">★</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your thoughts about this order..." maxlength="1000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

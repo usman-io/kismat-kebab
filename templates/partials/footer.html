@@ -1,0 +1,38 @@
+<footer class="footer">
+    <div class="container footer-grid">
+        <div class="footer-brand">
+            <h3>{{ SITE_NAME }}</h3>
+            <p>{{ SITE_TAGLINE }}</p>
+            <p class="footer-location"><i class="fas fa-map-marker-alt"></i> 98 King St, Cottingham HU16 5QE Hull, England</p>
+        </div>
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="{% url 'store:home' %}">Home</a></li>
+                <li><a href="#">Menu</a></li>
+                <li><a href="#">Delivery Info</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </div>
+        <div class="footer-links">
+            <h4>Account</h4>
+            <ul>
+                <li><a href="{% url 'accounts:signup' %}">Sign Up</a></li>
+                <li><a href="{% url 'accounts:login' %}">Sign In</a></li>
+                <li><a href="#">My Orders</a></li>
+                <li><a href="#">Favourites</a></li>
+            </ul>
+        </div>
+        <div class="footer-contact">
+            <h4>Opening Hours</h4>
+            <p>Mon – Thu: 11:00 – 23:00</p>
+            <p>Fri – Sat: 11:00 – 00:00</p>
+            <p>Sun: 12:00 – 22:00</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div class="container">
+            <p>&copy; {% now "Y" %} {{ SITE_NAME }}. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
