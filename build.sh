@@ -18,4 +18,6 @@ python manage.py migrate --noinput
 echo "==> Collecting static files..."
 python manage.py collectstatic --noinput
 
+python manage.py create_superuser
+
 echo "==> Deployment build completed successfully!"
