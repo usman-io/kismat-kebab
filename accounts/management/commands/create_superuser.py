@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         User = get_user_model()
 
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(email=username).exists():
             self.stdout.write(
                 self.style.WARNING(
                     f"Superuser '{username}' already exists."
@@ -27,10 +27,13 @@ class Command(BaseCommand):
             )
             return
 
-        User.objects.create_superuser(
-            username=username,
+        user = User.objects.create_superuser(
+            email=username,
             password=password,
         )
+        user.username = username
+        user.save()
+
 
         self.stdout.write(
             self.style.SUCCESS(
